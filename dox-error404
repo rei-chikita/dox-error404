@@ -1,0 +1,277 @@
+#!/bin/bash
+ver='1.3'
+help='echo -e Use:\n-v or -- version: Show version\n-h or --hep: Show this message\n-i or --install: install dependences\n'
+
+info()  { echo -e "\\033[1;32m[INFO]\\033[0m  $*"; }
+fatal() { echo -e "\\033[1;31m[FATAL]\\033[0m  $*"; exit 1 ; }
+
+neo=$(command -v neofetch)
+diag=$(command -v dialog)
+
+depen () {
+  if [ "$neo" == "/usr/bin/neofetch" ] ; then
+    info "Dependencia cumplida :D"
+  elif [ "$neo" == "$PREFIX/bin/neofetch" ]; then
+    info "Dependencia cumplida :D"
+  else
+    info "Dependencia incumplida :/"
+    info "Instalando..."
+    sleep 7
+    apt install neofetch dialog -y
+    clear
+  fi
+}
+
+check_os () {
+  depen
+  info "Detectando SO..."
+  sleep 2
+  OS=$(uname)
+  readonly OS
+  info "Sistema Operativo: $OS"
+  if [ "${OS}" = "Linux" ] ; then
+    info "Iniciando instalacion en Linux..."
+    sleep 2
+    install_linux
+    config
+  else
+    fatal "No soporto el sistema: $OS"
+  fi
+}
+
+
+install_linux () {
+  info "Detectando distro linux..."
+  Distro=''
+  if [ -d $PREFIX/include/ ] ; then
+    Distro='Termux'
+  elif [ -f /etc/os-release ] ; then
+    DISTRO_ID=$(grep ^ID= /etc/os-release | cut -d= -f2-)
+    if [ "${DISTRO_ID}" = 'kali' ] ; then
+      Distro='Kali'
+    elif [ "${DISTRO_ID}" = 'debian' ] ; then
+      Distro='Debian'
+    elif [ "${DISTRO_ID}" = 'arch' ] || [ "${DISTRO_ID}" = 'archarm' ] ; then
+      Distro='Arch'
+    elif [ "${DISTRO_ID}" = 'parrot' ] ; then
+      Distro="Parrot"
+    elif [ "${DISTRO_ID}" = "ubuntu" ] ; then
+      Distro="Ubuntu"
+    fi
+  fi
+
+  if [ -z "${Distro}" ] ; then
+    fatal "No soporto tu distro del sistema ${OS}"
+  fi
+
+  readonly Distro
+  sleep 2
+  info "Distro Linux: ${Distro}"
+  sleep 2
+  neofetch --ascii_distro $Distro
+  echo
+  info "Instalando en ${Distro} paquetes necesarios..."
+  sleep 3
+  if [ "${Distro}" = "Debian" ] || [ "${Distro}" = "Kali" ] || [ "${Distro}" = "Ubuntu" ] || [ "${Distro}" = "Parrot" ] ; then
+    apt-get update && apt-get upgrade -y
+    apt-get install curl git wget dialog -y
+    clear
+    cp dox-error404 /usr/bin
+    sleep 2
+    clear
+  elif [ "${Distro}" = "Arch" ]; then
+    pacman -Syu # Update System...
+    pacman -S curl git wget dialog
+    clear
+    cp dox-error404 /usr/bin
+    sleep 2
+    clear
+  elif [ "${Distro}" = "Termux" ]; then
+    pkg update && pkg upgrade -y
+    termux-setup-storage
+    pkg install -y curl wget dialog
+    clear
+    cp dox-error404 $PREFIX/bin
+    sleep 2
+    clear
+  fi
+}
+
+
+config () {
+if [ "$dox-error404" == "/usr/bin/dox-error404" ] ; then
+  info "Instalado en binarios :D"; sleep 5
+elif [ -f $PREFIX/bin/dox-error404 ] ; then
+  info "Instalado en binarios :D"; sleep 5
+else
+  fatal "No estoy en binarios :/"; sleep 5
+fi
+finish
+}
+
+
+finish () {
+  clear
+  echo
+  info "Instalacion completada!"
+  echo
+  info "Ejecuta: \\033[1;32m bash dox-error404 -h\\033[0m  para iniciar ;)"
+  echo
+}
+
+dialog --create-rc ~/.dialogrc
+rm -rf $HOME/.dialogrc
+cp config $HOME/.dialogrc
+
+function choise_local(){
+INPX=''
+if [ -d /usr/bin/ ] ; then
+  INPX='/tmp/menu.sh.$$'
+elif [ -d $PREFIX/include ] ; then
+  INPX='$PREFIX/tmp/menu.sh.$$'
+fi
+INPUT='$INPX'
+dialog --screen-center --column-separator "|" --title "Ω Dox -Error404- Ω"  --colors --infobox "\Z1               ▒░                         ░▒     \n             ▒█▒                           ▓█░   \n           ▓██░        ▒▓▓████████▓▓▒       ███▓ \n          ▒██▒       ▒████████████████▒      ███ \n          ████     ░███████████████████▓    ▒███▓\n          ████▓░   █████████████████████    █████\n          ▒███████▓█████████████████████▓▓██████▓\n           █████████████████████████████████████ \n            ░█████████████████████████████████▓░ \n               ▓▓████▓██████████████████████▒    \n                  ██░ ░█████████████  ██▓░       \n                  ███░  ▓█████████▓  ▒██░        \n                  ▓████▓ ▒███████▓ ▓███▓         \n                    ▒████████████████▓           \n                   █░ ▓█████▓  ▓████▒ ░█         \n                   ▓█▒ ▓████▓▒▒▒███▓ ▓█▓         \n                   ▒█▒ █████████████ ▒█▓         \n                   ██  █████████████  ██         \n                   ██  ▓▓ ██ ██ █▒░▓  ██         \n                   ██▓               ▓██▒        \n                   ███▓  ░░ ▒  ▒  ░ ▒███         \n                    ▓██▓ ██▒█▓▓█▒██▒███          \n                     ▒███████████████▓           \n                       █████████████▓            \n                        ▓██████████▓             \n                           ▓████▓░               " 27 65 ; sleep 5
+dialog --backtitle "Created by Error 404 Security" --column-separator "|" --no-tags --title "☢ Doxing Error 404 ☢" --ok-label 'Seleccionar' --menu "\nModo de busqueda cedula, placa o convencional\n " 12 55 20\
+ 1 ' ✘  | Verificar una Cedula | ✘ '\
+ 2 ' ✘  | Verificar una Placa  | ✘ '\
+ 3 ' ✘  | Verificar Tlfn. Conv | ✘ ' 2>"${INPUT}"
+ menu=$(<"${INPUT}")
+case $menu in
+  1) dialog --backtitle "Created by -Error 404 Security-" --column-separator "|" --title "☢ Doxing Error 404 ☢" --cancel-label "exit" --inputbox "\nDigite su numero de Cedula: " 8 40 2> num.txt
+     diag=num.txt
+     if [ -s "$diag" ]; then
+       dox=$(cat num.txt)
+       doxing=$(curl -s -L "si.secap.gob.ec/sisecap/servicioObtieneDatosRegistroCivil.php?num_doc=$dox" --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.63 Safari/537.31" > doxing.log)
+       sed "s| |-|g" doxing.log > doxing1.log
+       rm -rf doxing.log
+       sed "s|,| |g" doxing1.log > doxing2.log
+       rm -rf doxing1.log
+       nombre=$(egrep -w " " doxing2.log | awk {'print $4'})
+       edad=$(egrep -w " " doxing2.log | awk {'print $5'})
+       ocupacion=$(egrep -w " " doxing2.log | awk {'print $7'})
+       madre=$(egrep -w " " doxing2.log | awk {'print $8'})
+       padre=$(egrep -w " " doxing2.log | awk {'print $9'})
+       esposo=$(egrep -w " " doxing2.log | awk {'print $14'})
+       studi=$(egrep -w " " doxing2.log | awk {'print $15'})
+       consul=$(egrep -w " " doxing2.log | awk {'print $19'})
+       rm num.txt
+       rm '$INPX'
+     else
+       rm num.txt
+       rm '$INPX'
+       exit
+     fi
+
+     if (dialog --backtitle "Created by -Error 404 Security-" --column-separator "|" --title "☢ Doxing 404 Error 404 ☢"  --yes-button "exit" --no-button "Consulta Nueva" --yesno "\nDatos obtenidos del Registro Civil  \n\nC.Identi   :  $dox \nNombre     : $nombre \nFecha Nac. : $edad \nCiudadania : $ocupacion \nNo. Madre  : $madre \nNo. Padre  : $padre \nOcupacion  : $studi \nEspos@     : $esposo \nCons. Real.: $consul" 20 60) then
+        $?
+        rm -rf doxing2.log *.txt
+        clear
+        clear
+     else
+        $?
+        choise_local
+     fi
+   ;;
+  2) dialog --backtitle "Created by -Error 404 Security-" --column-separator "|" --title "☢ Doxing Error 404 ☢" --cancel-label "exit" --inputbox "\nDigite su numero de Placa: " 8 40 2> num2.txt
+     placa=$(cat num2.txt | tr '[:lower:]' '[:upper:]')
+     curl -s -k -X $'GET' -H $'Host: infoplacas.herokuapp.com' -H $'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0' -H $'Accept: */*' -H $'Accept-Language: es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3' -H $'Accept-Encoding: gzip, deflate' -H $'Origin: http://apptransitoec.infotransitoec.com' -H $'Referer: http://apptransitoec.infotransitoec.com/' -H $'Sec-Fetch-Dest: empty' -H $'Sec-Fetch-Mode: cors' -H $'Sec-Fetch-Site: cross-site' -H $'Te: trailers' -H $'Connection: close' $'https://infoplacas.herokuapp.com/http://www.ecuadorlegalonline.com/modulo/sri/matriculacion/consultar-vehiculo-rubros.php?placa='$placa'' &> /dev/null > placa.txt
+     sed "s|,| |g" placa.txt > placa1.txt
+     sed "s|:| |g" placa1.txt > placa.txt
+     curl 'https://infoplacas.herokuapp.com/https://consultaweb.ant.gob.ec/SVT/paginas/portal/svp_json_recupera_datos.jsp?ps_identificacion=&ps_id_servicio=91&ps_parametro1=&ps_id_grupo_servicio=&ps_placa='$placa'' -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0' -H 'Accept: */*' -H 'Accept-Language: en-US,en;q=0.5' --compressed -H 'Origin: http://apptransitoec.infotransitoec.com' -H 'Connection: keep-alive' -H 'Referer: http://apptransitoec.infotransitoec.com/apptransitoecinfoplacaec/index.html?' &> /dev/null > placa2.txt
+     sed "s|,| |g" placa2.txt > placa3.txt
+     sed "s|:| |g" placa3.txt > placa2.txt
+     pais=$(grep -o 'descripcionPais.*' placa.txt | tr -d '"' | cut -d " " -f 2)
+     canton=$(grep -o 'descripcionCanton.*' placa2.txt | cut -d " " -f 4,5)
+     marca=$(egrep -w " " placa.txt | tr -d '"'| awk {'print $17'})
+     servicio=$(cat placa.txt | grep -i "servicio" | tr '"' ' ' | tr -d '{,},:,-1,[]' | awk {'print $47'})
+     color=$(cat placa.txt | tr '"' ' ' | tr -d '{,},:,-1,[]' | awk {'print $9'})
+     ultimaMatri=$(cat placa.txt | tr '"' ' ' | tr -d '{,},:,[]' | awk {'print $36'})
+     proenaj=$(cat placa.txt | tr '"' ' ' | tr -d '{,},:,[]' | awk {'print $51'})
+     modelo=$(cat placa.txt | tr '"' '\n' | head -n 34 | tail -n 1)
+     anio=$(cat placa.txt | tr '"' '\n' | head -n 37 | tail -n 1)
+     cedula=$(cat placa2.txt | tr -d '"' | awk {'print $26'})
+     nombres=$(cat placa2.txt | tr -d '"' | cut -d " " -f 31,32,33,34)
+     email=$(grep -o '"email".*' placa2.txt | tr -d '"' | cut -d " " -f2) #greps bv
+     cantiTrami=$(grep -o '"cantTramites".*' placa2.txt | tr -d '"' | cut -d " " -f2)
+     ramv=$(grep -o 'numeroCamvCpn.*' placa.txt | tr -d '"' | cut -d " " -f 2)
+
+    if (dialog --backtitle "Created by -Error 404 Security-" --column-separator "|" --title "☢ Doxing 404 Error 404 ☢" --yes-button "exit" --no-button "Consulta Nueva" --yesno "Datos obtenidos de Internet  \n\nPais           : $pais \nCanton         : $canton \nNombres        :  $nombres \nCedula         :    $cedula \nEmail          : $email   \nPlaca          : $placa  \nCant.Tramites  : $cantiTrami \nMarca          : $marca \nServicio       : $servicio \nColor          : $color \nUlt. Matr.     : $ultimaMatri \nProhiEnaj      : $proenaj \nModelo         : $modelo \nAño            : $anio  \nRAMV           : $ramv \n"  23 70);then
+       choise_local
+    fi
+   ;;
+ 3) dialog --backtitle "Created by -Error 404-" --column-separator "|" --title "☢ Doxing Error 404 ☢" --cancel-label "exit" --inputbox "\nDigite 7 digitos de su Telefono: " 8 40 2> num3.txt
+    diag3=num3.txt
+    if [ -s "$diag3" ]; then
+      dox=$(cat num3.txt)
+      curl -s -L "http://www.edina.com.ec/BlancasDeta?text=$dox&pagina=1&loc=0" --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.63 Safari/537.31" > info.log
+      rm num3.txt
+    else
+      rm num3.txt
+      rm '$INPX'
+      exit
+    fi
+    info_fount() {
+    for i in {1. .6};do
+     if [[ -e "info.log" ]]; then
+        uno=$(grep -o '<a href="/blancas.*' info.log | cut -d "/" -f3)
+        dos=$(grep -o '<a href="/blancas.*' info.log | cut -d "/" -f4)
+        tres=$(grep -o '<strong.*' info.log | cut -d ">" -f2 | cut -d "<" -f1)
+        echo $uno > info1.log
+        echo $dos > info2.log
+        echo $tres > info3.log
+        sed "s| - ||g" info3.log > info4.log
+      fi
+     done
+        nombre=$(grep '^' info2.log | cut -d " " -f1)
+        lugar=$(grep '^' info1.log | cut -d " " -f1)
+        telefono=$(grep '^' info4.log | cut -d " " -f1)
+        nombre1=$(grep '^' info2.log | cut -d " " -f2)
+        lugar1=$(grep '^' info1.log | cut -d " " -f2)
+        telefono1=$(grep '^' info4.log | cut -d " " -f2)
+        nombre2=$(grep '^' info2.log | cut -d " " -f3)
+        lugar2=$(grep '^' info1.log | cut -d " " -f3)
+        telefono2=$(grep '^' info4.log | cut -d " " -f3)
+        nombre3=$(grep '^' info2.log | cut -d " " -f4)
+        lugar3=$(grep '^' info1.log | cut -d " " -f4)
+        telefono3=$(grep '^' info4.log | cut -d " " -f4)
+        nombre4=$(grep '^' info2.log | cut -d " " -f5)
+        lugar4=$(grep '^' info1.log | cut -d " " -f5)
+        telefono4=$(grep '^' info4.log | cut -d " " -f5)
+        nombre5=$(grep '^' info2.log | cut -d " " -f6)
+        lugar5=$(grep '^' info1.log | cut -d " " -f6)
+        telefono5=$(grep '^' info4.log | cut -d " " -f6)
+   }
+   info_fount
+   rm -rf info.log
+   rm -rf info1.log
+   rm -rf info2.log
+   rm -rf info3.log
+   rm -rf info4.log
+   if ( dialog --backtitle "Created by -Error 404 Security-" --column-separator "|" --title "☢ Doxing 404 Error 404 ☢" --yes-button "exit" --no-button "Consuta Nueva" --yesno "\nDatos obtenidos de Internet  : \n\n${nombre^^} \n${lugar^^}  \n$telefono \n\n${nombre1^^} \n${lugar1^^} \n$telefono1 \n\n${nombre2^^} \n${lugar2^^} \n$telefono2   \n\n${nombre3^^} \n${lugar3^^} \n$telefono3 \n\n${nombre4^^}\n${lugar4^^}\n$telefono4 \n\n${nombre5^^}\n${lugar5^^}\n $telefono5" 20 65 ) then
+       $?
+       clear
+       clear
+    else
+       $?
+       choise_local
+    fi
+   ;;
+  *)
+    rm -rf doxing2.log *.txt
+    rm '$INPX'
+    clear
+esac
+}
+
+while [ "$1" != "" ] && [ "$1" != "--" ]; do
+  case "$1" in
+    -v|--version) echo "DOX-404 V$ver"; exit;;
+    -h|--help) $help; exit;;
+    -i|--install) check_os; shift;;
+  esac
+  shift # Shift new parameters
+done
+
+
+choise_local
